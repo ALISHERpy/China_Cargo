@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from datetime import timedelta
 
 import dj_database_url
 import dotenv
@@ -42,9 +43,18 @@ INSTALLED_APPS = [
     # 3rd party apps
     'django_celery_beat',
     'debug_toolbar',
+    
 
     # local apps
+
     'users.apps.UsersConfig',
+        # LOCAL
+    'xitoy_cargo',
+    # EXTRA
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_yasg',
+
 ]
 
 MIDDLEWARE = [
@@ -180,4 +190,33 @@ TELEGRAM_LOGS_CHAT_ID = os.getenv("TELEGRAM_LOGS_CHAT_ID", default=None)
 #     # django.contrib.auth) you may enable sending PII data.
 #     send_default_pii=True
 # )
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'xitoy_cargo.pagination.StandardResultsSetPagination',
+}
+
+SWAGGER_SETTINGS = {
+    # "DEFAULT_AUTO_SCHEMA_CLASS": "shared.swagger.CustomAutoSchema",
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Type in the *\'Value\'* input box below: **\'Bearer &lt;JWT&gt;\'**, '
+                           'where JWT is the JSON web token you get back when logging in.'
+        },
+    },
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
 

@@ -11,6 +11,7 @@ from dtb.settings import DEBUG
 from tgbot.handlers.broadcast_message.manage_data import CONFIRM_DECLINE_BROADCAST
 from tgbot.handlers.broadcast_message.static_text import broadcast_command
 from tgbot.handlers.onboarding.manage_data import SECRET_LEVEL_BUTTON
+from tgbot.handlers.onboarding import static_text as textlarim
 
 from tgbot.handlers.utils import files, error
 from tgbot.handlers.admin import handlers as admin_handlers
@@ -18,6 +19,15 @@ from tgbot.handlers.location import handlers as location_handlers
 from tgbot.handlers.onboarding import handlers as onboarding_handlers
 from tgbot.handlers.broadcast_message import handlers as broadcast_handlers
 from tgbot.main import bot
+from tgbot.states import GET_numer, GET_Full_name
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    ConversationHandler,
+    CallbackContext,
+)
 
 
 def setup_dispatcher(dp):
@@ -25,16 +35,30 @@ def setup_dispatcher(dp):
     Adding handlers for events from Telegram
     """
     # onboarding
-    dp.add_handler(CommandHandler("start", onboarding_handlers.command_start))
+    conv_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(onboarding_handlers.got_register, pattern="register_me")],
+        states={
+            GET_Full_name: [
+                MessageHandler(Filters.text, onboarding_handlers.Name_Handler),
+            ],
+            GET_numer: [
+                MessageHandler(Filters.text, onboarding_handlers.Phone_number_handler),
+            ],
+        },
+        fallbacks=[MessageHandler(Filters.text & ~Filters.command, onboarding_handlers.command_start)],
+    )
+    dp.add_handler(conv_handler)
 
+    # onboarding
+    dp.add_handler(CommandHandler("start", onboarding_handlers.command_start))
     # admin commands
     dp.add_handler(CommandHandler("admin", admin_handlers.admin))
     dp.add_handler(CommandHandler("stats", admin_handlers.stats))
     dp.add_handler(CommandHandler('export_users', admin_handlers.export_users))
 
     # location
-    dp.add_handler(CommandHandler("ask_location", location_handlers.ask_for_location))
-    dp.add_handler(MessageHandler(Filters.location, location_handlers.location_handler))
+    # dp.add_handler(CommandHandler("ask_location", location_handlers.ask_for_location))
+    # dp.add_handler(MessageHandler(Filters.location, location_handlers.location_handler))
 
     # secret level
     dp.add_handler(CallbackQueryHandler(onboarding_handlers.secret_level, pattern=f"^{SECRET_LEVEL_BUTTON}"))
